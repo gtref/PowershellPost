@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<channel><title>My Windows blog</title>
+<description>Notes about PowerShell</description><language>en</language>
+<lastBuildDate>Wed, 04 Nov 2026 22:56:31 GMT</lastBuildDate>
+<pubDate>Wed, 04 Nov 2026 22:56:31 GMT</pubDate>
+<item><title>First post</title><description><![CDATA[<p>Welcome viewers. This is my first ever post using pp.ps1. pp.ps1 is a simple script that I have made that is designed to copy how the single file script <a href="https://github.com/cfenollosa/bashblog">BashBlog</a> functions.</p>
+<p>Tags: <a href='tag_Welcome.html'>Welcome</a>, <a href='tag_First-Post.html'>First-Post</a> </p>
+<!-- text end -->
+]]></description>
+<dc:creator>Ronan</dc:creator><pubDate>Wed, 04 Nov 2026 22:56:30 GMT</pubDate></item>
+</channel></rss>
