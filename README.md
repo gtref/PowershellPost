@@ -1,4 +1,5 @@
 # PowershellPost
+[![PSScriptAnalyzer](https://github.com/gtref/PowershellPost/actions/workflows/powershell.yml/badge.svg)](https://github.com/gtref/PowershellPost/actions/workflows/powershell.yml)
 
 PowershellPost is a small, single-script blog publisher for Windows PowerShell. Write source posts in `posts`; generated HTML, CSS, RSS, and supporting pages are written to `dist`. The `posts` directory is never used as the publication output.
 
