@@ -12,7 +12,7 @@ function global_variables {
     $script:global_url = "http://example.com/blog"
     $script:global_author = "John Smith"
     $script:global_author_url = "http://twitter.com/example"
-    $script:global_source_url = "https://github.com/cfenollosa/bashblog"
+    $script:global_source_url = "https://github.com/gtref/PowershellPost"
     $script:global_email = "john@smith.com"
     $script:global_license = "CC by-nc-nd"
     $script:global_feedburner = ""
@@ -21,8 +21,15 @@ function global_variables {
     $script:global_twitter_cookieless = "true"
     $script:global_twitter_search = "twitter"
     $script:global_disqus_username = ""
+    $script:about_page = $true
+    $script:about_me = ""
+    $script:github_profile = $false
+    $script:github_user_name = ""
+    $script:devto_profile = $false
+    $script:devto_user_name = ""
 
     $script:index_file = "index.html"
+    $script:about_file = "about.html"
     $script:number_of_index_articles = 8
     $script:archive_index = "all_posts.html"
     $script:tags_index = "all_tags.html"
@@ -78,7 +85,8 @@ function global_variables {
         "global_title", "global_description", "global_url", "global_author",
         "global_author_url", "global_source_url", "global_email", "global_license", "global_feedburner",
         "global_twitter_username", "global_twitter_card_image", "global_twitter_cookieless",
-        "global_twitter_search", "global_disqus_username", "index_file",
+        "global_twitter_search", "global_disqus_username", "about_page", "about_me",
+        "github_profile", "github_user_name", "devto_profile", "devto_user_name", "index_file",
         "number_of_index_articles", "archive_index", "tags_index", "non_blogpost_files",
         "blog_feed", "number_of_feed_articles", "cut_do", "cut_tags", "cut_line",
         "save_markdown", "prefix_tags", "staticpage_tag", "header_file", "footer_file",
@@ -161,6 +169,11 @@ function Import-PpConfig {
         elseif ($name -eq "convert_filename") {
             $parsedValue = $value -notin @("", "false", "no", "0")
         }
+        elseif ($name -in @("about_page", "github_profile", "devto_profile")) {
+            if ($value -match '^(true|yes|1)$') { $parsedValue = $true }
+            elseif ($value -match '^(false|no|0|)$') { $parsedValue = $false }
+            else { throw "Configuration setting '$name' must be true or false." }
+        }
         elseif ($name -in @(
             "global_url", "global_author_url", "global_source_url",
             "global_twitter_username", "global_twitter_card_image",
@@ -196,9 +209,14 @@ function Convert-PpMarkdownInline {
 
     $encoded = [Net.WebUtility]::HtmlEncode($Text)
     $codeSpans = [Collections.Generic.List[string]]::new()
-    $encoded = [regex]::Replace($encoded, '`([^`]+)`', {
+    $encoded = [regex]::Replace($encoded, '(?<!`)(?<ticks>`+)(?!`)(?<code>.+?)\k<ticks>(?!`)', {
         param($match)
-        $codeSpans.Add("<code>$($match.Groups[1].Value)</code>")
+        $code = $match.Groups["code"].Value -replace '\r?\n', ' '
+        if ($code.Length -ge 2 -and $code.StartsWith(" ") -and $code.EndsWith(" ") -and
+            $code.Trim(" ").Length -gt 0) {
+            $code = $code.Substring(1, $code.Length - 2)
+        }
+        $codeSpans.Add("<code>$code</code>")
         "PPMARKDOWNCODE$($codeSpans.Count - 1)TOKEN"
     })
     $encoded = [regex]::Replace($encoded, '!\[([^\]]*)\]\(([^)\s]+)(?:\s+&quot;(.*?)&quot;)?\)', {
@@ -251,17 +269,18 @@ function Convert-PpMarkdown {
             continue
         }
 
-        if ($line -match '^\s*(```+|~~~+)') {
+        if ($line -match '^\s*(?<fence>`{3,}|~{3,})\s*(?<language>.*?)\s*$|^\s*(?<single>`)\s*$') {
             if ($paragraph.Count) {
                 $formattedParagraph = @($paragraph | ForEach-Object { Convert-PpMarkdownInline $_ }) -join ' '
                 $html.Add("<p>$formattedParagraph</p>")
                 $paragraph.Clear()
             }
-            $fence = $Matches[1].Substring(0, 3)
-            $language = ($line -replace '^\s*(```+|~~~+)\s*', '').Trim()
+            $fence = if ($Matches["fence"]) { $Matches["fence"] } else { $Matches["single"] }
+            $language = if ($Matches["fence"]) { $Matches["language"].Trim() } else { "" }
             $code = [Collections.Generic.List[string]]::new()
             $index++
-            while ($index -lt $lines.Count -and $lines[$index] -notmatch "^\s*$([regex]::Escape($fence))") {
+            $closingFence = "^\s*$([regex]::Escape($fence))\s*$"
+            while ($index -lt $lines.Count -and $lines[$index] -notmatch $closingFence) {
                 $code.Add([Net.WebUtility]::HtmlEncode($lines[$index]))
                 $index++
             }
@@ -554,6 +573,12 @@ function global_variables_check {
     if ($script:footer_file -eq ".footer.html") {
         throw "'.footer.html' is not a valid value for the setting 'footer_file'."
     }
+    if ($script:github_profile -and $script:github_user_name -notmatch '^[A-Za-z0-9-]+$') {
+        throw "Set github_user_name to a valid GitHub username when github_profile is enabled."
+    }
+    if ($script:devto_profile -and $script:devto_user_name -notmatch '^[A-Za-z0-9_-]+$') {
+        throw "Set devto_user_name to a valid dev.to username when devto_profile is enabled."
+    }
 }
 
 function Get-PostTitle {
@@ -645,6 +670,7 @@ function Test-BoilerplateFile {
         [IO.Path]::GetFileName($script:footer_file), [IO.Path]::GetFileName($script:header_file),
         ".header.html", ".footer.html", ".title.html"
     )) { return $true }
+    if ($script:about_page -and $name -eq $script:about_file) { return $true }
     if ($name.StartsWith($script:prefix_tags, [StringComparison]::OrdinalIgnoreCase)) { return $true }
     return $name -in $script:html_exclude
 }
@@ -696,6 +722,105 @@ function Get-SocialMeta {
         if ($image) { $meta.Add("<meta name='twitter:image' content='$image' />") }
     }
     return $meta
+}
+
+function Get-ExternalProfile {
+    param([ValidateSet("GitHub", "DevTo")][string]$Service, [string]$Username)
+
+    $escapedUsername = [Uri]::EscapeDataString($Username)
+    if ($Service -eq "GitHub") {
+        $uri = "https://api.github.com/users/$escapedUsername"
+        $profileUrl = "https://github.com/$escapedUsername"
+    }
+    else {
+        $uri = "https://dev.to/api/users/by_username?username=$escapedUsername"
+        $profileUrl = "https://dev.to/$escapedUsername"
+    }
+
+    try {
+        $response = Invoke-RestMethod -Uri $uri -Headers @{ "User-Agent" = "PowershellPost" } `
+            -TimeoutSec 20 -ErrorAction Stop
+    }
+    catch {
+        throw "Unable to fetch the $Service profile for '$Username': $($_.Exception.Message)"
+    }
+
+    if (-not $response) { throw "The $Service profile response for '$Username' was empty." }
+    $name = if ($response.name) { [string]$response.name } else { $Username }
+    $bio = if ($Service -eq "GitHub") { [string]$response.bio } else { [string]$response.summary }
+    $image = if ($Service -eq "GitHub") { [string]$response.avatar_url } else { [string]$response.profile_image }
+    if ($image) {
+        $imageUri = $null
+        if (-not [Uri]::TryCreate($image, [UriKind]::Absolute, [ref]$imageUri) -or
+            $imageUri.Scheme -ne "https") {
+            $image = ""
+        }
+    }
+    return [pscustomobject]@{
+        Service = $Service
+        Username = $Username
+        Name = $name
+        Bio = $bio
+        Image = $image
+        Url = $profileUrl
+    }
+}
+
+function Get-PpProfiles {
+    $profiles = [Collections.Generic.List[object]]::new()
+    if ($script:github_profile) {
+        $profiles.Add((Get-ExternalProfile -Service GitHub -Username $script:github_user_name))
+    }
+    if ($script:devto_profile) {
+        $profiles.Add((Get-ExternalProfile -Service DevTo -Username $script:devto_user_name))
+    }
+    return $profiles.ToArray()
+}
+
+function New-AboutPage {
+    param([object[]]$Profiles)
+
+    $contentPath = Join-Path (Get-Location) (".about-" + [guid]::NewGuid().ToString("N") + ".content")
+    $lines = [Collections.Generic.List[string]]::new()
+    $author = [Net.WebUtility]::HtmlEncode($script:global_author)
+    $lines.Add('<div class="about-page">')
+    $lines.Add('<div class="about-intro">')
+    $lines.Add("<h2>About me</h2>")
+    $lines.Add("<h3>$author</h3>")
+    $biography = if ($script:about_me) { $script:about_me } else { $script:global_description }
+    foreach ($paragraph in ($biography -split '\r?\n\s*\r?\n')) {
+        if (-not [string]::IsNullOrWhiteSpace($paragraph)) {
+            $text = [Net.WebUtility]::HtmlEncode($paragraph.Trim()) -replace '\r?\n', '<br />'
+            $lines.Add("<p>$text</p>")
+        }
+    }
+    $lines.Add("</div>")
+    foreach ($profile in $Profiles) {
+        $name = [Net.WebUtility]::HtmlEncode($profile.Name)
+        $url = [Net.WebUtility]::HtmlEncode($profile.Url)
+        $service = [Net.WebUtility]::HtmlEncode($profile.Service)
+        $lines.Add("<div class=`"about-profile`"><h3>$service</h3>")
+        if ($profile.Image) {
+            $image = [Net.WebUtility]::HtmlEncode($profile.Image)
+            $lines.Add("<p class=`"about-avatar`"><a href=`"$url`" rel=`"noopener noreferrer`"><img src=`"$image`" alt=`"$name profile photo`" width=`"120`" /></a></p>")
+        }
+        $lines.Add("<p class=`"about-profile-name`"><a href=`"$url`" rel=`"noopener noreferrer`">$name</a></p>")
+        if ($profile.Bio) {
+            $bio = [Net.WebUtility]::HtmlEncode($profile.Bio)
+            $lines.Add("<p>$bio</p>")
+        }
+        $lines.Add("</div>")
+    }
+    $lines.Add("</div>")
+
+    Write-Utf8File -Path $contentPath -Content ($lines -join [Environment]::NewLine)
+    try {
+        New-HtmlPage -ContentPath $contentPath -OutputPath $script:about_file -IsIndex $true `
+            -Title "About me" -Timestamp $null -Author $script:global_author
+    }
+    finally {
+        if (Test-Path -LiteralPath $contentPath) { Remove-Item -LiteralPath $contentPath -Force }
+    }
 }
 
 function Get-DisqusBody {
@@ -892,6 +1017,7 @@ function Write-Entry {
 
     $format = if ((Test-Markdown) -and -not $Html) { "md" } else { "html" }
     $temporary = $InputFile
+    $starterContent = ""
     if ($InputFile) {
         $candidate = if ([IO.Path]::IsPathRooted($InputFile)) {
             $InputFile
@@ -919,12 +1045,21 @@ function Write-Entry {
         else {
             "<p>The rest of the text file is an <b>HTML</b> blog post.</p>`n`n<p>$($script:template_tags_line_header) keep-this-tag-format, tags-are-optional, example</p>"
         }
-        Write-Utf8File -Path $temporary -Content ("Title on this line`n`n$example")
+        $starterContent = "Title on this line`n`n$example"
+        Write-Utf8File -Path $temporary -Content $starterContent
     }
 
     $postedPath = ""
     while ($true) {
         Invoke-Editor -Path $temporary
+        if ($starterContent) {
+            $editedContent = [IO.File]::ReadAllText($temporary) -replace "`r`n?", "`n"
+            if ($editedContent -eq $starterContent) {
+                Remove-Item -LiteralPath $temporary -Force
+                Write-Host "No post created. Replace the starter title and text before publishing or saving a draft."
+                return $false
+            }
+        }
         $source = $temporary
         $markdownOutput = ""
         if ($format -eq "md") {
@@ -1042,6 +1177,9 @@ function Build-SourcePosts {
             $slug = if ($script:convert_filename) { ConvertTo-PostFileName $title } else { $title }
             if (-not $slug) { throw "Post source '$($sourceFile.Name)' has a title that cannot form a filename." }
             $outputName = "$slug.html"
+            if ($script:about_page -and $outputName -eq $script:about_file) {
+                throw "Post '$($sourceFile.Name)' conflicts with the generated About page '$($script:about_file)'."
+            }
             if (-not $outputNames.Add($outputName)) {
                 throw "More than one source post generates '$outputName'. Give the posts distinct titles."
             }
@@ -1119,7 +1257,9 @@ function Rebuild-Index {
         $count++
     }
     $feed = if ($script:global_feedburner) { $script:global_feedburner } else { $script:blog_feed }
-    $entries.Add("<div id=`"all_posts`"><a href=`"$($script:archive_index)`">$($script:template_archive)</a> &mdash; <a href=`"$($script:tags_index)`">$($script:template_tags_title)</a> &mdash; <a href=`"$feed`">$($script:template_subscribe)</a></div>")
+    $navigation = "<div id=`"all_posts`"><a href=`"$($script:archive_index)`">$($script:template_archive)</a> &mdash; <a href=`"$($script:tags_index)`">$($script:template_tags_title)</a> &mdash; <a href=`"$feed`">$($script:template_subscribe)</a>"
+    if ($script:about_page) { $navigation += " &mdash; <a href=`"$($script:about_file)`">About me</a>" }
+    $entries.Add("$navigation</div>")
     Write-Utf8File -Path $contentPath -Content ($entries -join [Environment]::NewLine)
     try {
         $temporary = "$($script:index_file).tmp"
@@ -1346,12 +1486,18 @@ function Create-Css {
     }
     if (-not (Test-Path -LiteralPath "blog.css")) {
         Write-Utf8File "blog.css" @'
-#title{font-size:x-large;}a.ablack{color:black!important;}li{margin-bottom:8px;}
-ul,ol{margin-left:24px;margin-right:24px;}#all_posts{margin-top:24px;text-align:center;}
-.subtitle{font-size:small;margin:12px 0}.content p{margin-left:24px;margin-right:24px;}
-h1{margin-bottom:12px!important}#description{font-size:large;margin-bottom:12px;}
-h3{margin-top:42px;margin-bottom:8px}h4{margin-left:24px;margin-right:24px;}
+#title{font-size:x-large}a.ablack{color:#172b4d!important}li{margin-bottom:10px}
+ul,ol{margin-left:24px;margin-right:24px}#all_posts{margin-top:32px;text-align:center;padding:16px;background:#f3f6fa;border-radius:8px}
+.subtitle{font-size:small;margin:12px 0;color:#667085}.content p{margin-left:24px;margin-right:24px;line-height:1.75}
+h1{margin-bottom:12px!important}#description{font-size:large;margin-bottom:12px;color:#526174}
+h3{margin-top:36px;margin-bottom:8px}h4{margin-left:24px;margin-right:24px}
 img{max-width:100%}#twitter{line-height:20px;vertical-align:top;text-align:right;font-style:italic;color:#333;margin-top:24px;font-size:14px}
+.about-page{max-width:720px;margin:12px auto 28px}.about-intro{padding:8px 0 18px}
+.about-page h2{margin:0 24px 12px;color:#172b4d;font-size:2rem}.about-page h3{margin:8px 24px;color:#344054}
+.about-page p{margin:10px 24px}.about-profile{display:inline-block;vertical-align:top;box-sizing:border-box;width:calc(50% - 14px);min-width:220px;margin:8px 5px;padding:20px;background:#f7f9fc;border:1px solid #e4eaf2;border-radius:12px}
+.about-profile h3{margin:0 0 12px;font-size:1.1rem}.about-avatar{text-align:left}.about-avatar img{width:96px;height:96px;object-fit:cover;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 10px rgba(23,43,77,.14)}
+.about-profile-name{font-size:1.1rem;font-weight:bold}.about-profile a{color:#1769aa!important}
+@media(max-width:600px){.about-profile{display:block;width:auto;margin:12px 18px}#divbody{padding:0 18px 24px}.content p{margin-left:12px;margin-right:12px}}
 '@
     }
     if (-not (Test-Path -LiteralPath "main.css") -and (Test-Path -LiteralPath (Join-Path (Get-Location) "..\style.css"))) {
@@ -1359,17 +1505,19 @@ img{max-width:100%}#twitter{line-height:20px;vertical-align:top;text-align:right
     }
     elseif (-not (Test-Path -LiteralPath "main.css")) {
         Write-Utf8File "main.css" @'
-body{font-family:Georgia,"Times New Roman",Times,serif;margin:0;padding:0;background-color:#F3F3F3;}
-#divbodyholder{padding:5px;background-color:#DDD;width:100%;max-width:874px;margin:24px auto;}
-#divbody{border:solid 1px #ccc;background-color:#fff;padding:0 48px 24px;top:0;}
-.headerholder{background-color:#f9f9f9;border-top:solid 1px #ccc;border-left:solid 1px #ccc;border-right:solid 1px #ccc;}
-.header{width:100%;max-width:800px;margin:0 auto;padding-top:24px;padding-bottom:8px;}
-.content{margin-bottom:5%}.nomargin{margin:0}.description{margin-top:10px;border-top:solid 1px #666;padding:10px 0;}
-h3{font-size:20pt;width:100%;font-weight:bold;margin-top:32px;margin-bottom:0}.clear{clear:both;}
-#footer{padding-top:10px;border-top:solid 1px #666;color:#333;text-align:center;font-size:small;font-family:"Courier New",monospace;}
-a{text-decoration:none;color:#036!important}a:visited{text-decoration:none;color:#369!important}
-blockquote{background-color:#f9f9f9;border-left:solid 4px #e9e9e9;margin-left:12px;padding:12px 12px 12px 24px}
+*{box-sizing:border-box}
+body{font-family:Georgia,"Times New Roman",Times,serif;margin:0;padding:0;background:#eef2f6;color:#27364b;line-height:1.6}
+#divbodyholder{padding:8px;background:#e3eaf2;width:calc(100% - 32px);max-width:920px;margin:32px auto;border-radius:14px;box-shadow:0 8px 28px rgba(28,48,74,.08)}
+#divbody{border:1px solid #dce3eb;background:#fff;padding:0 48px 28px;border-radius:10px}
+.headerholder{background:#f8fafc;border:1px solid #e5eaf0;border-radius:10px 10px 0 0}
+.header{width:100%;max-width:800px;margin:0 auto;padding:28px 20px 14px}
+.content{margin:0 auto 5%;max-width:800px}.nomargin{margin:0}.description{margin-top:10px;border-top:solid 1px #dce3eb;padding:10px 0}
+h3{font-size:20pt;width:100%;font-weight:bold;margin-top:32px;margin-bottom:0}.clear{clear:both}
+#footer{padding-top:16px;border-top:solid 1px #dce3eb;color:#667085;text-align:center;font-size:small;font-family:"Courier New",monospace}
+a{text-decoration:none;color:#1769aa!important}a:visited{text-decoration:none;color:#4b61a8!important}a:hover{text-decoration:underline}
+blockquote{background:#f7f9fc;border-left:solid 4px #91b5d8;margin-left:12px;padding:12px 12px 12px 24px;border-radius:0 8px 8px 0}
 blockquote img,blockquote iframe{margin:12px 0}
+@media(max-width:600px){#divbodyholder{width:calc(100% - 16px);margin:8px auto;padding:4px}#divbody{padding:0 16px 22px}.header{padding:20px 12px 10px}}
 '@
     }
 }
@@ -1499,6 +1647,21 @@ function Invoke-PpMain {
         }
         if ($draftSaved) { return }
         Build-SourcePosts
+        if ($script:about_page) {
+            $profiles = @(Get-PpProfiles)
+            New-AboutPage -Profiles $profiles
+        }
+        else {
+            $manifestPath = Join-Path $script:dist_root ".pp-posts.json"
+            $sourceOutputs = if (Test-Path -LiteralPath $manifestPath) {
+                @(Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json)
+            }
+            else { @() }
+            $aboutPath = Join-Path $script:dist_root $script:about_file
+            if ($script:about_file -notin $sourceOutputs -and (Test-Path -LiteralPath $aboutPath)) {
+                Remove-Item -LiteralPath $aboutPath -Force
+            }
+        }
         Rebuild-Tags
         Rebuild-Index
         New-ArchivePage
