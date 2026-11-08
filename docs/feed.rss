@@ -2,11 +2,33 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
 <channel><title>My Windows blog</title>
 <description>Notes about PowerShell</description><language>en</language>
-<lastBuildDate>Wed, 04 Nov 2026 22:56:31 GMT</lastBuildDate>
-<pubDate>Wed, 04 Nov 2026 22:56:31 GMT</pubDate>
+<lastBuildDate>Sun, 08 Nov 2026 20:19:21 GMT</lastBuildDate>
+<pubDate>Sun, 08 Nov 2026 20:19:21 GMT</pubDate>
+<item><title>PowerShell Post Updates</title><description><![CDATA[<h1>Powershell post release 0.1.1</h1>
+<p>Welcome to this new release of powershell post. In this version we have lots of new features ready for users. We have added github card and dev.to card support. And removed that awefull bug where when you post it also uploads the file <code>title-on-this-line.md</code>. An example config that enables these new options is as follows</p>
+<pre><code>global_title=My Windows blog
+global_description=Notes about PowerShell
+global_url=NO
+global_twitter_username=FALSE
+global_twitter_card_image=FALSE
+global_author=Ronan
+global_author_url=https://example.com
+global_source_url=NO
+global_email=hello@example.com
+number_of_index_articles=8
+number_of_feed_articles=10
+devto_profile=true
+devto_user_name=example
+github_profile=true
+github_user_name=example</code></pre>
+<p>Happy blogging and see you on the next big release</p>
+<p>Tags: <a href='tag_releases.html'>releases</a>, <a href='tag_socials.html'>socials</a>, <a href='tag_Updates.html'>Updates</a> </p>
+<!-- text end -->
+]]></description>
+<dc:creator>Ronan</dc:creator><pubDate>Sun, 08 Nov 2026 20:19:20 GMT</pubDate></item>
 <item><title>First post</title><description><![CDATA[<p>Welcome viewers. This is my first ever post using pp.ps1. pp.ps1 is a simple script that I have made that is designed to copy how the single file script <a href="https://github.com/cfenollosa/bashblog">BashBlog</a> functions.</p>
 <p>Tags: <a href='tag_Welcome.html'>Welcome</a>, <a href='tag_First-Post.html'>First-Post</a> </p>
 <!-- text end -->
 ]]></description>
-<dc:creator>Ronan</dc:creator><pubDate>Wed, 04 Nov 2026 22:56:30 GMT</pubDate></item>
+<dc:creator>Ronan</dc:creator><pubDate>Sun, 08 Nov 2026 20:19:20 GMT</pubDate></item>
 </channel></rss>

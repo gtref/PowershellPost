@@ -1,6 +1,12 @@
-#title{font-size:x-large;}a.ablack{color:black!important;}li{margin-bottom:8px;}
-ul,ol{margin-left:24px;margin-right:24px;}#all_posts{margin-top:24px;text-align:center;}
-.subtitle{font-size:small;margin:12px 0}.content p{margin-left:24px;margin-right:24px;}
-h1{margin-bottom:12px!important}#description{font-size:large;margin-bottom:12px;}
-h3{margin-top:42px;margin-bottom:8px}h4{margin-left:24px;margin-right:24px;}
+#title{font-size:x-large}a.ablack{color:#172b4d!important}li{margin-bottom:10px}
+ul,ol{margin-left:24px;margin-right:24px}#all_posts{margin-top:32px;text-align:center;padding:16px;background:#f3f6fa;border-radius:8px}
+.subtitle{font-size:small;margin:12px 0;color:#667085}.content p{margin-left:24px;margin-right:24px;line-height:1.75}
+h1{margin-bottom:12px!important}#description{font-size:large;margin-bottom:12px;color:#526174}
+h3{margin-top:36px;margin-bottom:8px}h4{margin-left:24px;margin-right:24px}
 img{max-width:100%}#twitter{line-height:20px;vertical-align:top;text-align:right;font-style:italic;color:#333;margin-top:24px;font-size:14px}
+.about-page{max-width:720px;margin:12px auto 28px}.about-intro{padding:8px 0 18px}
+.about-page h2{margin:0 24px 12px;color:#172b4d;font-size:2rem}.about-page h3{margin:8px 24px;color:#344054}
+.about-page p{margin:10px 24px}.about-profile{display:inline-block;vertical-align:top;box-sizing:border-box;width:calc(50% - 14px);min-width:220px;margin:8px 5px;padding:20px;background:#f7f9fc;border:1px solid #e4eaf2;border-radius:12px}
+.about-profile h3{margin:0 0 12px;font-size:1.1rem}.about-avatar{text-align:left}.about-avatar img{width:96px;height:96px;object-fit:cover;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 10px rgba(23,43,77,.14)}
+.about-profile-name{font-size:1.1rem;font-weight:bold}.about-profile a{color:#1769aa!important}
+@media(max-width:600px){.about-profile{display:block;width:auto;margin:12px 18px}#divbody{padding:0 18px 24px}.content p{margin-left:12px;margin-right:12px}}

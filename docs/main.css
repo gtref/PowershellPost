@@ -1,11 +1,13 @@
-body{font-family:Georgia,"Times New Roman",Times,serif;margin:0;padding:0;background-color:#F3F3F3;}
-#divbodyholder{padding:5px;background-color:#DDD;width:100%;max-width:874px;margin:24px auto;}
-#divbody{border:solid 1px #ccc;background-color:#fff;padding:0 48px 24px;top:0;}
-.headerholder{background-color:#f9f9f9;border-top:solid 1px #ccc;border-left:solid 1px #ccc;border-right:solid 1px #ccc;}
-.header{width:100%;max-width:800px;margin:0 auto;padding-top:24px;padding-bottom:8px;}
-.content{margin-bottom:5%}.nomargin{margin:0}.description{margin-top:10px;border-top:solid 1px #666;padding:10px 0;}
-h3{font-size:20pt;width:100%;font-weight:bold;margin-top:32px;margin-bottom:0}.clear{clear:both;}
-#footer{padding-top:10px;border-top:solid 1px #666;color:#333;text-align:center;font-size:small;font-family:"Courier New",monospace;}
-a{text-decoration:none;color:#036!important}a:visited{text-decoration:none;color:#369!important}
-blockquote{background-color:#f9f9f9;border-left:solid 4px #e9e9e9;margin-left:12px;padding:12px 12px 12px 24px}
+*{box-sizing:border-box}
+body{font-family:Georgia,"Times New Roman",Times,serif;margin:0;padding:0;background:#eef2f6;color:#27364b;line-height:1.6}
+#divbodyholder{padding:8px;background:#e3eaf2;width:calc(100% - 32px);max-width:920px;margin:32px auto;border-radius:14px;box-shadow:0 8px 28px rgba(28,48,74,.08)}
+#divbody{border:1px solid #dce3eb;background:#fff;padding:0 48px 28px;border-radius:10px}
+.headerholder{background:#f8fafc;border:1px solid #e5eaf0;border-radius:10px 10px 0 0}
+.header{width:100%;max-width:800px;margin:0 auto;padding:28px 20px 14px}
+.content{margin:0 auto 5%;max-width:800px}.nomargin{margin:0}.description{margin-top:10px;border-top:solid 1px #dce3eb;padding:10px 0}
+h3{font-size:20pt;width:100%;font-weight:bold;margin-top:32px;margin-bottom:0}.clear{clear:both}
+#footer{padding-top:16px;border-top:solid 1px #dce3eb;color:#667085;text-align:center;font-size:small;font-family:"Courier New",monospace}
+a{text-decoration:none;color:#1769aa!important}a:visited{text-decoration:none;color:#4b61a8!important}a:hover{text-decoration:underline}
+blockquote{background:#f7f9fc;border-left:solid 4px #91b5d8;margin-left:12px;padding:12px 12px 12px 24px;border-radius:0 8px 8px 0}
 blockquote img,blockquote iframe{margin:12px 0}
+@media(max-width:600px){#divbodyholder{width:calc(100% - 16px);margin:8px auto;padding:4px}#divbody{padding:0 16px 22px}.header{padding:20px 12px 10px}}
